@@ -35,7 +35,7 @@ It provides **clear, structured, and natural conversations** — useful for codi
 3. **Install dependencies**
 
    ```bash
-   pip install -r requirements.txt
+   pip install -r requirments.txt
    ```
 
 4. **Set your API key (OpenAI/Google AI/etc.)**
@@ -52,13 +52,14 @@ It provides **clear, structured, and natural conversations** — useful for codi
 To start Igris from the console:
 
 ```bash
-uv run agent.py
+uv run agent.py console
 ```
 
 or (if not using `uv`):
 
 ```bash
-python agent.py
+python agent.py console
+
 ```
 
 ---
