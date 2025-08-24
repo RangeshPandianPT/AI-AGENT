@@ -1,4 +1,4 @@
-# 🖤 Igris – AI Agent
+# 🖤 Igris – AI Agent.
 
 Igris is a custom AI agent inspired by Jarvis, designed to act as a **personal assistant** for Rangesh Pandian PT.
 It provides **clear, structured, and natural conversations** — useful for coding, projects, and general queries.
