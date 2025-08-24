@@ -7,7 +7,7 @@ It provides **clear, structured, and natural conversations** — useful for codi
 
 ## 🚀 Features
 
-* 🧠 **Smart Conversations** – Understands and answers naturally.
+* 🧠 **Smart Conversations** – Understands and answers naturally..
 * 👨‍💻 **Technical Help** – Explains coding and project concepts step by step.
 * 📚 **Knowledgeable** – Supports learning with tips and examples.
 * 🎙️ **Voice-Ready** – Can be extended with TTS/STT for full voice interaction.
