@@ -1,8 +1,3 @@
-Perfect 👌 Let’s draft a **README.md** for your **Igris AI Agent** so anyone (including you later) can quickly understand how to set it up and run.
-
-Here’s a clean, professional version:
-
----
 
 # 🖤 Igris AI Agent
 
