@@ -126,4 +126,3 @@ Igris/
 
 
 
-👉 Do you want me to also add a **section with a demo usage example** (like what a sample conversation looks like in console) to make the README feel more complete?
