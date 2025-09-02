@@ -3,7 +3,5 @@ livekit-agents[google]~=1.2
 livekit-plugins-noise-cancellation~=0.2
 python-dotenv
 
-livekit-agents 
-livekit-agents[google]~=1.2
-livekit-plugins-noise-cancellation~=0.2
-python-dotenv
+
+
