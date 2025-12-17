@@ -1,0 +1,29 @@
+# IGRIS Backend Dependencies
+# Interactive Graphical Real-time Intelligent System
+
+# Web Framework
+flask>=3.0.0
+flask-socketio>=5.3.0
+flask-cors>=4.0.0
+
+# AI APIs
+openai>=1.0.0
+anthropic>=0.7.0
+google-generativeai>=0.3.0
+
+# Voice Processing
+SpeechRecognition>=3.10.0
+pyttsx3>=2.90
+
+# Audio
+PyAudio>=0.2.14
+
+# Environment
+python-dotenv>=1.0.0
+
+# WebSocket (required by flask-socketio)
+python-engineio>=4.0.0
+python-socketio>=5.0.0
+
+# Optional: Better async support
+eventlet>=0.33.0

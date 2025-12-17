@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IGRIS - Interactive Graphical Real-time Intelligent System">
+    <title>IGRIS - AI Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Three.js for 3D graphics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Socket.IO for real-time communication -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Main Container -->
+    <div id="app">
+        <!-- Header with IGRIS name -->
+        <header id="header">
+            <div class="header-line left"></div>
+            <div class="title-container">
+                <h1 class="title">I.G.R.I.S</h1>
+                <p class="subtitle">INTERACTIVE GRAPHICAL REAL-TIME INTELLIGENT SYSTEM</p>
+            </div>
+            <div class="header-line right"></div>
+        </header>
+
+        <!-- 3D Canvas Container -->
+        <div id="canvas-container">
+            <canvas id="igris-canvas"></canvas>
+        </div>
+
+        <!-- Status Display -->
+        <div id="status-container">
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span id="status-text">INITIALIZING</span>
+            </div>
+        </div>
+
+        <!-- Audio Level Display -->
+        <div id="audio-level-container">
+            <span class="audio-label">AUDIO LEVEL</span>
+            <div class="audio-bars">
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+            </div>
+        </div>
+
+        <!-- Corner Data Displays -->
+        <div class="corner-display top-left">
+            <span class="data-label">SYS</span>
+            <span class="data-value" id="sys-time">00:00:00</span>
+        </div>
+        <div class="corner-display top-right">
+            <span class="data-label">NET</span>
+            <span class="data-value" id="net-status">ONLINE</span>
+        </div>
+        <div class="corner-display bottom-left">
+            <span class="data-label">MEM</span>
+            <span class="data-value">OK</span>
+        </div>
+        <div class="corner-display bottom-right">
+            <span class="data-label">CPU</span>
+            <span class="data-value">NOMINAL</span>
+        </div>
+
+        <!-- Response Text Display -->
+        <div id="response-container">
+            <div id="response-text"></div>
+        </div>
+
+        <!-- Control Panel -->
+        <div id="control-panel">
+            <button id="btn-activate" class="control-btn">
+                <span class="btn-icon">🎤</span>
+                <span class="btn-text">ACTIVATE</span>
+            </button>
+            <button id="btn-reset" class="control-btn secondary">
+                <span class="btn-icon">↺</span>
+                <span class="btn-text">RESET</span>
+            </button>
+        </div>
+
+        <!-- Text Input (for testing) -->
+        <div id="text-input-container">
+            <input type="text" id="text-input" placeholder="Type a message to IGRIS...">
+            <button id="btn-send" class="control-btn small">SEND</button>
+        </div>
+    </div>
+
+    <!-- Audio elements for sound effects -->
+    <audio id="sound-boot" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2Onp6Xhn10dH2FjY+Ni4F5c3N3fYKFhoaFgoF+fHt8fX5/gIGBgYGBgIB/f39/f4CAgYGBgYGAgIB/f39/f4CAgICAgICAf39/f39/" type="audio/wav">
+    </audio>
+
+    <!-- Main Script -->
+    <script src="script.js"></script>
+</body>
+</html>
