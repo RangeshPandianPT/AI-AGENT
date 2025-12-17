@@ -2,7 +2,10 @@
 
 A stunning 3D animated AI assistant interface with Python backend and real-time voice interaction.
 
-![IGRIS Interface](frontend/screenshot.png)
+![IGRIS Interface]
+
+<img width="1915" height="853" alt="Screenshot 2025-12-17 111227" src="https://github.com/user-attachments/assets/becc428a-fba6-4fad-ba31-346ba2683dab" />
+
 
 ---
 
