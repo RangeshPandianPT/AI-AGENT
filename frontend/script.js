@@ -6,7 +6,7 @@
 // ==================== Global State ====================
 const IGRIS = {
     state: 'initializing', // initializing, idle, listening, thinking, speaking
-    socket: null,
+    livekitRoom: null,
     isConnected: false,
     isListening: false,
     scene: null,
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initScene();
         initObjects();
         initEventListeners();
-        connectWebSocket();
+        connectLiveKit();
         animate();
         
         // Update system time
@@ -474,66 +474,68 @@ function setState(newState) {
     }
 }
 
-// ==================== WebSocket Connection ====================
-function connectWebSocket() {
-    const serverUrl = 'http://localhost:5000';
-    
-    console.log('[WebSocket]: Connecting to', serverUrl);
+// ==================== LiveKit Connection ====================
+async function connectLiveKit() {
+    console.log('[LiveKit]: Fetching connection details from /api/connection-details...');
     
     try {
-        IGRIS.socket = io(serverUrl, {
-            transports: ['websocket', 'polling'],
-            reconnection: true,
-            reconnectionDelay: 1000,
-            reconnectionAttempts: 10
-        });
+        const response = await fetch('/api/connection-details');
+        const data = await response.json();
         
-        // Connection events
-        IGRIS.socket.on('connect', () => {
-            console.log('[WebSocket]: Connected');
+        if (data.error) {
+            console.error('[LiveKit Error]:', data.error);
+            showResponse('LiveKit configuration error: ' + data.error);
+            document.getElementById('net-status').textContent = 'ERROR';
+            return;
+        }
+
+        const room = new LivekitClient.Room({
+            adaptiveStream: true,
+            dynacast: true,
+        });
+        IGRIS.livekitRoom = room;
+
+        room.on(LivekitClient.RoomEvent.Connected, () => {
+            console.log('[LiveKit]: Connected to room', room.name);
             IGRIS.isConnected = true;
-            document.getElementById('net-status').textContent = 'ONLINE';
-            
-            // Request greeting
-            setTimeout(() => {
-                IGRIS.socket.emit('request_greeting');
-            }, 500);
+            document.getElementById('net-status').textContent = 'LK-ONLINE';
+            showResponse('Connected to LiveKit Realtime Agent');
         });
-        
-        IGRIS.socket.on('disconnect', () => {
-            console.log('[WebSocket]: Disconnected');
+
+        room.on(LivekitClient.RoomEvent.Disconnected, () => {
+            console.log('[LiveKit]: Disconnected');
             IGRIS.isConnected = false;
             document.getElementById('net-status').textContent = 'OFFLINE';
         });
-        
-        IGRIS.socket.on('connect_error', (error) => {
-            console.warn('[WebSocket]: Connection error', error.message);
-            document.getElementById('net-status').textContent = 'ERROR';
+
+        room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+            console.log('[LiveKit]: Track subscribed', track.kind, 'from', participant.identity);
+            if (track.kind === LivekitClient.Track.Kind.Audio) {
+                // Attach the audio track to the DOM
+                const audioElement = track.attach();
+                document.body.appendChild(audioElement);
+                
+                // Set up audio analyzer for visualization
+                setupAudioVisualization(audioElement);
+            }
         });
-        
-        // IGRIS events
-        IGRIS.socket.on('state_change', (data) => {
-            setState(data.state);
+
+        room.on(LivekitClient.RoomEvent.DataReceived, (payload, participant, kind, topic) => {
+            const decoder = new TextDecoder();
+            const message = decoder.decode(payload);
+            console.log('[LiveKit Data]:', message);
+            // Show any transcripts or messages from the agent
+            showResponse(message);
         });
-        
-        IGRIS.socket.on('ai_response', (data) => {
-            showResponse(data.text);
-        });
-        
-        IGRIS.socket.on('user_input', (data) => {
-            console.log('[User Said]:', data.text);
-        });
-        
-        IGRIS.socket.on('listening_started', () => {
-            IGRIS.isListening = true;
-        });
-        
-        IGRIS.socket.on('listening_stopped', () => {
-            IGRIS.isListening = false;
-        });
+
+        // Join the room
+        await room.connect(data.serverUrl, data.token);
+        console.log('[LiveKit]: Successfully joined room');
         
     } catch (error) {
-        console.error('[WebSocket]: Failed to connect', error);
+        console.error('[LiveKit]: Connection failed', error);
+        showResponse('LiveKit connection failed. Check console.');
+        document.getElementById('net-status').textContent = 'ERROR';
     }
 }
 
@@ -557,40 +559,58 @@ function updateSystemTime() {
 
 // ==================== Event Listeners ====================
 function initEventListeners() {
-    // Activate button
+    // Activate button toggles Local Microphone
     const activateBtn = document.getElementById('btn-activate');
-    activateBtn.addEventListener('click', () => {
-        if (IGRIS.isConnected) {
-            if (IGRIS.isListening) {
-                IGRIS.socket.emit('stop_listening');
-            } else {
-                IGRIS.socket.emit('start_listening');
+    activateBtn.addEventListener('click', async () => {
+        if (IGRIS.isConnected && IGRIS.livekitRoom) {
+            try {
+                if (IGRIS.isListening) {
+                    await IGRIS.livekitRoom.localParticipant.setMicrophoneEnabled(false);
+                    IGRIS.isListening = false;
+                    setState('idle');
+                } else {
+                    await IGRIS.livekitRoom.localParticipant.setMicrophoneEnabled(true);
+                    IGRIS.isListening = true;
+                    setState('listening');
+                }
+            } catch (error) {
+                console.error("Microphone error", error);
+                showResponse("Error accessing microphone.");
             }
         } else {
-            showResponse('Not connected to IGRIS backend. Please start the server.');
+            showResponse('Not connected to LiveKit.');
         }
     });
     
     // Reset button
     const resetBtn = document.getElementById('btn-reset');
     resetBtn.addEventListener('click', () => {
-        if (IGRIS.isConnected) {
-            IGRIS.socket.emit('reset_conversation');
-            showResponse('Conversation reset.');
+        // We can send a reset text message to the agent if supported, or reconnect
+        showResponse('Disconnecting and reconnecting...');
+        if(IGRIS.livekitRoom) {
+            IGRIS.livekitRoom.disconnect();
+            setTimeout(connectLiveKit, 1000);
         }
     });
     
-    // Text input
+    // Text input (for testing)
     const textInput = document.getElementById('text-input');
     const sendBtn = document.getElementById('btn-send');
     
     const sendTextInput = () => {
         const text = textInput.value.trim();
         if (text && IGRIS.isConnected) {
-            IGRIS.socket.emit('text_input', { text: text });
+            // Encode string
+            const encoder = new TextEncoder();
+            const data = encoder.encode(text);
+            // In LiveKit, data messages are sent to the room
+            if (IGRIS.livekitRoom && IGRIS.livekitRoom.localParticipant) {
+                IGRIS.livekitRoom.localParticipant.publishData(data, { reliable: true });
+            }
+            showResponse(`You: ${text}`);
             textInput.value = '';
         } else if (!IGRIS.isConnected) {
-            showResponse('Not connected to IGRIS backend.');
+            showResponse('Not connected to LiveKit.');
         }
     };
     
@@ -610,14 +630,71 @@ function initEventListeners() {
         }
         // Escape to stop
         if (e.code === 'Escape') {
-            if (IGRIS.isListening) {
-                IGRIS.socket.emit('stop_listening');
+            if (IGRIS.isListening && IGRIS.livekitRoom) {
+                IGRIS.livekitRoom.localParticipant.setMicrophoneEnabled(false);
+                IGRIS.isListening = false;
+                setState('idle');
             }
         }
     });
 }
 
 // ==================== Audio Visualization ====================
+let audioContext = null;
+let analyser = null;
+let dataArray = null;
+
+function setupAudioVisualization(audioElement) {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+    
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.8;
+    
+    // Some browsers need crossOrigin
+    audioElement.crossOrigin = "anonymous";
+    const source = audioContext.createMediaElementSource(audioElement);
+    source.connect(analyser);
+    analyser.connect(audioContext.destination);
+    
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    
+    function updateVisualization() {
+        requestAnimationFrame(updateVisualization);
+        if (analyser && dataArray) {
+            analyser.getByteFrequencyData(dataArray);
+            
+            let sum = 0;
+            for(let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i];
+            }
+            const average = sum / dataArray.length;
+            const level = Math.min(1.0, average / 128.0);
+            
+            // Sync state visually
+            if (level > 0.05) {
+                if (IGRIS.state !== 'speaking' && !IGRIS.isListening) {
+                    setState('speaking');
+                }
+                updateAudioLevel(level);
+            } else {
+                if (IGRIS.state === 'speaking') {
+                    setState('idle');
+                }
+                updateAudioLevel(0.1);
+            }
+        }
+    }
+    
+    updateVisualization();
+}
+
 function updateAudioLevel(level) {
     const bars = document.querySelectorAll('.audio-bar');
     bars.forEach((bar, i) => {
@@ -626,17 +703,5 @@ function updateAudioLevel(level) {
     });
 }
 
-// Simulate audio levels when speaking
-setInterval(() => {
-    if (IGRIS.state === 'speaking') {
-        const fakeLevel = 0.3 + Math.random() * 0.7;
-        updateAudioLevel(fakeLevel);
-    } else if (IGRIS.state === 'listening') {
-        const fakeLevel = 0.1 + Math.random() * 0.3;
-        updateAudioLevel(fakeLevel);
-    } else {
-        updateAudioLevel(0.1);
-    }
-}, 100);
 
 console.log('[IGRIS]: Script loaded successfully');

@@ -143,6 +143,37 @@ def status():
     })
 
 
+@app.route('/api/connection-details')
+def connection_details():
+    """Generate LiveKit token for the frontend."""
+    from livekit import api
+    import uuid
+    
+    livekit_url = os.getenv('LIVEKIT_URL')
+    api_key = os.getenv('LIVEKIT_API_KEY')
+    api_secret = os.getenv('LIVEKIT_API_SECRET')
+    
+    if not all([livekit_url, api_key, api_secret]):
+        return jsonify({'error': 'LiveKit credentials missing in .env'}), 500
+
+    room_name = "igris-room"
+    identity = f"user_{uuid.uuid4().hex[:8]}"
+
+    # Create an AccessToken
+    token = api.AccessToken(api_key, api_secret) \
+        .with_identity(identity) \
+        .with_name("Master") \
+        .with_grants(api.VideoGrants(
+            room_join=True,
+            room=room_name,
+        )).to_jwt()
+
+    return jsonify({
+        'serverUrl': livekit_url,
+        'token': token,
+        'roomName': room_name
+    })
+
 # ==================== WebSocket Events ====================
 
 @socketio.on('connect')
@@ -242,11 +273,12 @@ def initialize():
 
 if __name__ == '__main__':
     # Initialize components
-    initialize()
+    # initialize() # Disabled local voice engine to let LiveKit handle audio via browser
     
     # Print startup info
     print("[Server]: Starting IGRIS backend server...")
     print("[Server]: Frontend URL: http://localhost:5000")
+    print("[Server]: API generated LiveKit token at /api/connection-details")
     print("[Server]: Press Ctrl+C to stop")
     print()
     
