@@ -12,6 +12,7 @@ const IGRIS = {
     scene: null,
     camera: null,
     renderer: null,
+    composer: null,
     clock: null,
     
     // 3D Objects
@@ -116,7 +117,6 @@ function initScene() {
     );
     IGRIS.camera.position.z = 8;
     
-    // Renderer
     IGRIS.renderer = new THREE.WebGLRenderer({
         canvas: canvas,
         antialias: true,
@@ -124,6 +124,24 @@ function initScene() {
     });
     IGRIS.renderer.setSize(container.clientWidth, container.clientHeight);
     IGRIS.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    IGRIS.renderer.toneMapping = THREE.ReinhardToneMapping;
+    IGRIS.renderer.toneMappingExposure = 1.5;
+    
+    // Setup Bloom Post-Processing
+    const renderScene = new THREE.RenderPass(IGRIS.scene, IGRIS.camera);
+    
+    // Resolution, strength, radius, threshold
+    const bloomPass = new THREE.UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        1.5, 0.4, 0.85
+    );
+    bloomPass.threshold = 0.2;
+    bloomPass.strength = 1.2;
+    bloomPass.radius = 0.5;
+    
+    IGRIS.composer = new THREE.EffectComposer(IGRIS.renderer);
+    IGRIS.composer.addPass(renderScene);
+    IGRIS.composer.addPass(bloomPass);
     
     // Clock
     IGRIS.clock = new THREE.Clock();
@@ -133,6 +151,7 @@ function initScene() {
         IGRIS.camera.aspect = container.clientWidth / container.clientHeight;
         IGRIS.camera.updateProjectionMatrix();
         IGRIS.renderer.setSize(container.clientWidth, container.clientHeight);
+        IGRIS.composer.setSize(container.clientWidth, container.clientHeight);
     });
 }
 
@@ -380,8 +399,12 @@ function animate() {
     // Animate pulse rings
     animatePulseRings(time);
     
-    // Render
-    IGRIS.renderer.render(IGRIS.scene, IGRIS.camera);
+    // Render using composer for bloom
+    if (IGRIS.composer) {
+        IGRIS.composer.render();
+    } else {
+        IGRIS.renderer.render(IGRIS.scene, IGRIS.camera);
+    }
 }
 
 function updateCoreColor(time) {
@@ -540,15 +563,31 @@ async function connectLiveKit() {
 }
 
 // ==================== UI Functions ====================
+let typeWriterTimeout = null;
+
 function showResponse(text) {
     const responseEl = document.getElementById('response-text');
-    responseEl.textContent = text;
     responseEl.classList.add('visible');
     
-    // Hide after a while
-    setTimeout(() => {
-        responseEl.classList.remove('visible');
-    }, 8000);
+    // Clear previous typing
+    if (typeWriterTimeout) clearTimeout(typeWriterTimeout);
+    responseEl.textContent = '';
+    
+    let i = 0;
+    function typeWriter() {
+        if (i < text.length) {
+            responseEl.textContent += text.charAt(i);
+            i++;
+            typeWriterTimeout = setTimeout(typeWriter, 30); // 30ms per char
+        } else {
+            // Hide after a while once typing is complete
+            typeWriterTimeout = setTimeout(() => {
+                responseEl.classList.remove('visible');
+            }, 8000);
+        }
+    }
+    
+    typeWriter();
 }
 
 function updateSystemTime() {
@@ -683,11 +722,25 @@ function setupAudioVisualization(audioElement) {
                     setState('speaking');
                 }
                 updateAudioLevel(level);
+                
+                // Make particles react to audio
+                if (IGRIS.particles) {
+                    const audioReactScale = 1 + (level * 2);
+                    IGRIS.particles.scale.set(audioReactScale, audioReactScale, audioReactScale);
+                    IGRIS.animParams.particleSpeed = 0.005 + (level * 0.02);
+                }
+                
             } else {
                 if (IGRIS.state === 'speaking') {
                     setState('idle');
                 }
                 updateAudioLevel(0.1);
+                
+                // Reset particles
+                if (IGRIS.particles) {
+                    IGRIS.particles.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
+                    IGRIS.animParams.particleSpeed = 0.001;
+                }
             }
         }
     }

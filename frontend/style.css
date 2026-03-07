@@ -151,8 +151,10 @@ body {
     align-items: center;
     gap: 12px;
     padding: 10px 25px;
-    background: rgba(0, 10, 20, 0.8);
-    border: 1px solid var(--neon-cyan-dim);
+    background: rgba(0, 10, 20, 0.4);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 168, 179, 0.5);
     border-radius: 25px;
     box-shadow: 0 0 20px rgba(0, 245, 255, 0.1);
 }
@@ -280,8 +282,10 @@ body {
     color: var(--text-primary);
     line-height: 1.6;
     padding: 15px;
-    background: rgba(0, 20, 30, 0.6);
-    border: 1px solid rgba(0, 245, 255, 0.2);
+    background: rgba(0, 20, 30, 0.4);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 245, 255, 0.3);
     border-radius: 10px;
     opacity: 0;
     transform: translateY(10px);
@@ -309,8 +313,10 @@ body {
     align-items: center;
     gap: 8px;
     padding: 12px 25px;
-    background: rgba(0, 245, 255, 0.1);
-    border: 1px solid var(--neon-cyan);
+    background: rgba(0, 245, 255, 0.05);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 245, 255, 0.5);
     border-radius: 8px;
     color: var(--text-primary);
     font-family: var(--font-display);
@@ -376,8 +382,10 @@ body {
 #text-input {
     width: 300px;
     padding: 10px 15px;
-    background: rgba(0, 20, 30, 0.8);
-    border: 1px solid var(--neon-cyan-dim);
+    background: rgba(0, 20, 30, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 168, 179, 0.6);
     border-radius: 5px;
     color: var(--text-primary);
     font-family: var(--font-body);

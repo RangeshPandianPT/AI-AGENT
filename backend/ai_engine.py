@@ -4,6 +4,15 @@ Uses Hugging Face Inference API with Llama 3.2 model.
 """
 
 import os
+import datetime
+import platform
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    print("[AI Engine]: psutil not installed. System stats will be limited.")
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -52,6 +61,25 @@ if HF_API_KEY:
 conversation_history = []
 
 
+def get_system_context() -> str:
+    """Gather real-time system context to inject into prompt."""
+    now = datetime.datetime.now()
+    current_time = now.strftime("%I:%M %p")
+    current_date = now.strftime("%B %d, %Y")
+    
+    context = f"Current Time: {current_time}\nCurrent Date: {current_date}\n"
+    
+    if PSUTIL_AVAILABLE:
+        cpu_usage = psutil.cpu_percent()
+        mem = psutil.virtual_memory()
+        mem_usage = mem.percent
+        context += f"System Status: CPU at {cpu_usage}%, Memory at {mem_usage}%\n"
+    else:
+        context += f"System Status: Running on {platform.system()} {platform.release()}\n"
+        
+    return context
+
+
 def get_ai_response(user_input: str) -> str:
     """
     Generate an AI response based on user input.
@@ -68,9 +96,14 @@ def get_ai_response(user_input: str) -> str:
         return "I apologize, Master. The AI engine is not configured. Please add HF_API_KEY to your .env file."
     
     try:
+        # Get real-time system info
+        sys_info = get_system_context()
+        
         # Build messages with system prompt and history
+        dynamic_system_prompt = f"{IGRIS_SYSTEM_PROMPT}\n\nSYSTEM CONTEXT (Use this real data ONLY if asked about time, date, or system status):\n{sys_info}"
+        
         messages = [
-            {"role": "system", "content": IGRIS_SYSTEM_PROMPT}
+            {"role": "system", "content": dynamic_system_prompt}
         ]
         
         # Add conversation history (last 6 messages)
