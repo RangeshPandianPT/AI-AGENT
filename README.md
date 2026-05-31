@@ -9,6 +9,9 @@ Igris can process text & audio in real-time and respond with natural speech.
 ## 🚀 Features
 
 * 🎤 Real-time audio & text interaction
+* 👁️ **Vision capabilities:** IGRIS can see you through your webcam
+* 🧠 **Persistent Memory:** Remembers user preferences using SQLite
+* 🛠️ **AI Tool Calling:** IGRIS can actively change UI colors and trigger backend functions
 * ⚡ Powered by **Gemini 2.0 Flash Experimental** model
 * 🗣️ Voice synthesis (Puck voice by default)
 * 🔑 Secure API key management
