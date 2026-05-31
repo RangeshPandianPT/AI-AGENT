@@ -547,6 +547,17 @@ async function connectLiveKit() {
             const decoder = new TextDecoder();
             const message = decoder.decode(payload);
             console.log('[LiveKit Data]:', message);
+            
+            try {
+                const data = JSON.parse(message);
+                if (data.type === 'change_color' && data.color) {
+                    changeCoreColor(data.color);
+                    return;
+                }
+            } catch (e) {
+                // Not JSON, continue to normal handling
+            }
+            
             // Show any transcripts or messages from the agent
             showResponse(message);
         });
@@ -596,6 +607,35 @@ function updateSystemTime() {
     document.getElementById('sys-time').textContent = time;
 }
 
+function changeCoreColor(colorName) {
+    // Basic color map
+    const colorMap = {
+        'red': 0xff0000,
+        'green': 0x00ff00,
+        'blue': 0x0000ff,
+        'yellow': 0xffff00,
+        'cyan': 0x00ffff,
+        'magenta': 0xff00ff,
+        'orange': 0xffa500,
+        'pink': 0xffc0cb,
+        'purple': 0x800080
+    };
+    
+    if (colorMap[colorName.toLowerCase()]) {
+        COLORS.cyan = colorMap[colorName.toLowerCase()];
+    } else if (COLORS[colorName]) {
+        COLORS.cyan = COLORS[colorName];
+    } else {
+        // Map hex code or standard
+        try {
+            COLORS.cyan = parseInt(colorName.replace('#', ''), 16) || 0x00f5ff;
+        } catch(e) {
+            // keep default
+        }
+    }
+    showResponse(`System color updated to ${colorName}`);
+}
+
 // ==================== Event Listeners ====================
 function initEventListeners() {
     // Activate button toggles Local Microphone
@@ -620,6 +660,32 @@ function initEventListeners() {
             showResponse('Not connected to LiveKit.');
         }
     });
+
+    // Camera button toggles Vision
+    const cameraBtn = document.getElementById('btn-camera');
+    if (cameraBtn) {
+        cameraBtn.addEventListener('click', async () => {
+            if (IGRIS.isConnected && IGRIS.livekitRoom) {
+                try {
+                    const localParticipant = IGRIS.livekitRoom.localParticipant;
+                    if (localParticipant.isCameraEnabled) {
+                        await localParticipant.setCameraEnabled(false);
+                        cameraBtn.classList.remove('active');
+                        showResponse("Vision disabled.");
+                    } else {
+                        await localParticipant.setCameraEnabled(true);
+                        cameraBtn.classList.add('active');
+                        showResponse("Vision enabled. I can see you now.");
+                    }
+                } catch (error) {
+                    console.error("Camera error", error);
+                    showResponse("Error accessing camera.");
+                }
+            } else {
+                showResponse('Not connected to LiveKit.');
+            }
+        });
+    }
     
     // Reset button
     const resetBtn = document.getElementById('btn-reset');
