@@ -7,7 +7,7 @@ from livekit.agents import AgentSession, Agent, RoomInputOptions
 from livekit.plugins import google, noise_cancellation
 from livekit.agents import llm
 from prompt import AGENT_INSTRUCTION, AGENT_RESPONSE
-from memory import save_memory, get_memories
+from memory import save_memory, get_memories, search_similar_memories
 import json
 
 load_dotenv(".env.local")
@@ -24,6 +24,9 @@ class AssistantContext(llm.FunctionContext):
         data = json.dumps({"type": "change_color", "color": color}).encode("utf-8")
         if self.room and self.room.local_participant:
             await self.room.local_participant.publish_data(data, reliable=True)
+            # Send tool call visualization
+            tool_data = json.dumps({"type": "tool_call", "tool": "change_ui_color", "args": {"color": color}}).encode("utf-8")
+            await self.room.local_participant.publish_data(tool_data, reliable=True)
         return f"UI color changed to {color}"
         
     @llm.ai_callable(description="Save an important fact or preference about the user into long-term memory.")
@@ -31,7 +34,21 @@ class AssistantContext(llm.FunctionContext):
         """Save a memory fact about the user."""
         print(f"[TOOL] Saving memory: {fact}")
         save_memory("default_user", fact)
+        if self.room and self.room.local_participant:
+            tool_data = json.dumps({"type": "tool_call", "tool": "save_user_preference", "args": {"fact": fact}}).encode("utf-8")
+            await self.room.local_participant.publish_data(tool_data, reliable=True)
         return "Memory saved successfully."
+
+    @llm.ai_callable(description="Search the user's long-term memory for past facts, preferences, or context based on a topic.")
+    async def search_memory(self, topic: str):
+        """Search memory for relevant facts."""
+        print(f"[TOOL] Searching memory for: {topic}")
+        if self.room and self.room.local_participant:
+            tool_data = json.dumps({"type": "tool_call", "tool": "search_memory", "args": {"topic": topic}}).encode("utf-8")
+            await self.room.local_participant.publish_data(tool_data, reliable=True)
+            
+        results = search_similar_memories("default_user", topic)
+        return f"Memory search results for '{topic}':\n{results}"
 
 class Assistant(Agent):
     def __init__(self) -> None:
