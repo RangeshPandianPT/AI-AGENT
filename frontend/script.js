@@ -554,6 +554,10 @@ async function connectLiveKit() {
                     changeCoreColor(data.color);
                     return;
                 }
+                if (data.type === 'tool_call') {
+                    addSystemLog(data);
+                    return;
+                }
             } catch (e) {
                 // Not JSON, continue to normal handling
             }
@@ -687,6 +691,29 @@ function initEventListeners() {
         });
     }
     
+    // Settings logic
+    const settingsBtn = document.getElementById('btn-settings');
+    const settingsModal = document.getElementById('settings-modal');
+    const closeSettingsBtn = document.getElementById('btn-close-settings');
+    const colorSelect = document.getElementById('color-select');
+    
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.classList.remove('hidden');
+        });
+    }
+    if (closeSettingsBtn) {
+        closeSettingsBtn.addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+        });
+    }
+    if (colorSelect) {
+        colorSelect.addEventListener('change', (e) => {
+            changeCoreColor(e.target.value);
+            addSystemLog({tool: "manual_override", args: {color: e.target.value}});
+        });
+    }
+
     // Reset button
     const resetBtn = document.getElementById('btn-reset');
     resetBtn.addEventListener('click', () => {
@@ -822,5 +849,32 @@ function updateAudioLevel(level) {
     });
 }
 
+// ==================== System Log ====================
+function addSystemLog(data) {
+    const logContainer = document.getElementById('system-log');
+    if (!logContainer) return;
+    
+    const entry = document.createElement('div');
+    entry.className = 'log-entry tool-call';
+    
+    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+    
+    let argsStr = '';
+    if (data.args) {
+        argsStr = Object.entries(data.args).map(([k, v]) => `${k}=${v}`).join(', ');
+    }
+    
+    entry.textContent = `[${time}] > EXECUTING PROTOCOL: ${data.tool} {${argsStr}} ... SUCCESS`;
+    
+    logContainer.appendChild(entry);
+    
+    // Auto scroll
+    logContainer.scrollTop = logContainer.scrollHeight;
+    
+    // Limit to 20 entries
+    while (logContainer.children.length > 20) {
+        logContainer.removeChild(logContainer.firstChild);
+    }
+}
 
 console.log('[IGRIS]: Script loaded successfully');
