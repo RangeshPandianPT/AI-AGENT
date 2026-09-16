@@ -97,6 +97,10 @@
                 <span class="btn-icon">📷</span>
                 <span class="btn-text">VISION</span>
             </button>
+            <button id="btn-settings" class="control-btn">
+                <span class="btn-icon">⚙️</span>
+                <span class="btn-text">SETTINGS</span>
+            </button>
             <button id="btn-reset" class="control-btn secondary">
                 <span class="btn-icon">↺</span>
                 <span class="btn-text">RESET</span>
@@ -107,6 +111,30 @@
         <div id="text-input-container">
             <input type="text" id="text-input" placeholder="Type a message to IGRIS...">
             <button id="btn-send" class="control-btn small">SEND</button>
+        </div>
+
+        <!-- System Log Terminal -->
+        <div id="system-log-container">
+            <div class="log-header">SYSTEM LOG</div>
+            <div id="system-log"></div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="hidden">
+            <div class="modal-content">
+                <h2>CORE SETTINGS</h2>
+                <div class="settings-group">
+                    <label>MANUAL OVERRIDE COLOR:</label>
+                    <select id="color-select">
+                        <option value="cyan">Cyan</option>
+                        <option value="violet">Violet</option>
+                        <option value="pink">Pink</option>
+                        <option value="red">Red</option>
+                        <option value="blue">Blue</option>
+                    </select>
+                </div>
+                <button id="btn-close-settings" class="control-btn small">CLOSE</button>
+            </div>
         </div>
     </div>
 
